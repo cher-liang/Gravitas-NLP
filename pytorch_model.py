@@ -2,8 +2,6 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from transformers import AutoModelForSequenceClassification
-from sentence_transformers import SentenceTransformer
-
 
 class QuestionAnswerPairSimilarityModel(nn.Module):
     # def __init__(self, lstm_dim, qnli_model_name, sts_model_name):
