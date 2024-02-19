@@ -50,7 +50,7 @@ class SentenceTransformer(nn.Sequential):
     def __init__(
         self,
         model_name_or_path: Optional[str] = None,
-        moduiles: Optional[Iterable[nn.Module]] = None,
+        modules: Optional[Iterable[nn.Module]] = None,
         device: Optional[str] = None,
         cache_folder: Optional[str] = None,
         use_auth_token: Union[bool, str, None] = None,
