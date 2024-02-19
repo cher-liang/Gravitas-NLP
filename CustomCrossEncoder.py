@@ -203,12 +203,15 @@ class CrossEncoder:
 
         if output_path is not None:
             os.makedirs(output_path, exist_ok=True)
-        
+
         if freeze:
             # Freeze all bert layers except the last
             self.model.base_model.requires_grad_(False)
 
-            for param in self.model.base_model.encoder.layer[5].parameters():
+            last_layer_num = len(self.model.base_model.encoder.layer) - 1
+            for param in self.model.base_model.encoder.layer[
+                last_layer_num
+            ].parameters():
                 param.requires_grad_(True)
 
         self.best_score = -9999999

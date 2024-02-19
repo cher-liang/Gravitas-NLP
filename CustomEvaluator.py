@@ -58,6 +58,9 @@ class CECustomEvaluator:
         logger.info("Correlation:\tPearson: {:.4f}\tSpearman: {:.4f}".format(eval_pearson, eval_spearman))
         logger.info("QWK: {:.4f}".format(eval_qwk))
 
+        if output_path is not None:
+            os.makedirs(output_path, exist_ok=True)
+
         if output_path is not None and self.write_csv:
             csv_path = os.path.join(output_path, self.csv_file)
             output_file_exists = os.path.isfile(csv_path)
