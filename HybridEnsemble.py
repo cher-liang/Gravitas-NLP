@@ -43,7 +43,7 @@ class HybridEnsemble(nn.Module):
         )
         st_output_1 = self.multilingual_st(**st_features_1, return_dict=True)
         st_embeddings_1 = self.average_pool(
-            st_output_1.last_hidden_state, gist_features_1["attention_mask"]
+            st_output_1.last_hidden_state, st_features_1["attention_mask"]
         )
 
         gist_output_0 = self.gist_bert(**gist_features_0, return_dict=True)
