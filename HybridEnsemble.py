@@ -1,9 +1,13 @@
+import logging
+
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 from transformers import AutoModelForSequenceClassification, AutoModel, AutoConfig
 from torch.nn import CosineSimilarity
+
 # from sentence_transformers.util import cos_sim
+logger = logging.getLogger(__name__)
 
 
 class HybridEnsemble(nn.Module):
@@ -18,7 +22,9 @@ class HybridEnsemble(nn.Module):
         )
         self.linear_last = nn.Linear(3, 1)
 
-    def average_pool(last_hidden_states: Tensor, attention_mask: Tensor) -> Tensor:
+    def average_pool(
+        self, last_hidden_states: Tensor, attention_mask: Tensor
+    ) -> Tensor:
         last_hidden = last_hidden_states.masked_fill(
             ~attention_mask[..., None].bool(), 0.0
         )
@@ -33,24 +39,24 @@ class HybridEnsemble(nn.Module):
         gist_features_1,
     ):
         sts_predictions = self.CE_roberta(**roberta_features, return_dict=True)
-        # activation_fn = nn.Sigmoid()
-        activation_fn = nn.Identity()
+        activation_fn = nn.Sigmoid()
+        # activation_fn = nn.Identity()
         sts_similarity = activation_fn(sts_predictions.logits)
 
-        st_output_0 = self.multilingual_st(**st_features_0, return_dict=True)
+        st_output_0 = self.multilingual_st(**st_features_0)
         st_embeddings_0 = self.average_pool(
             st_output_0.last_hidden_state, st_features_0["attention_mask"]
         )
-        st_output_1 = self.multilingual_st(**st_features_1, return_dict=True)
+        st_output_1 = self.multilingual_st(**st_features_1)
         st_embeddings_1 = self.average_pool(
             st_output_1.last_hidden_state, st_features_1["attention_mask"]
         )
 
-        gist_output_0 = self.gist_bert(**gist_features_0, return_dict=True)
+        gist_output_0 = self.gist_bert(**gist_features_0)
         gist_embeddings_0 = self.average_pool(
             gist_output_0.last_hidden_state, gist_features_0["attention_mask"]
         )
-        gist_output_1 = self.gist_bert(**gist_features_1, return_dict=True)
+        gist_output_1 = self.gist_bert(**gist_features_1)
         gist_embeddings_1 = self.average_pool(
             gist_output_1.last_hidden_state, gist_features_1["attention_mask"]
         )
@@ -60,7 +66,16 @@ class HybridEnsemble(nn.Module):
         gist_similarity = cos_sim(gist_embeddings_0, gist_embeddings_1)
 
         prediction = self.linear_last(
-            F.relu(torch.cat((sts_similarity, st_similarity, gist_similarity), dim=1))
+            F.relu(
+                torch.stack(
+                    (
+                        sts_similarity.view(-1),
+                        st_similarity,
+                        gist_similarity
+                    ),
+                    dim=1,
+                )
+            )
         )
 
         return prediction
